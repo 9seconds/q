@@ -1,0 +1,4 @@
+[package]
+name = "queries"
+version = "0.1.0"
+authors = ["Sergey Arkhipov <nineseconds@yandex.ru>"]
