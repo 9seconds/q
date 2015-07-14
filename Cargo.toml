@@ -8,5 +8,8 @@ readme = "README.md"
 license = "MIT License"
 authors = ["Sergey Arkhipov <nineseconds@yandex.ru>"]
 
-[dependencies]
+[dependencies.regex]
 regex = "0.1.8"
+
+[dependencies.clap]
+clap = "1.0.3"
