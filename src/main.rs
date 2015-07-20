@@ -4,6 +4,10 @@ extern crate regex;
 extern crate xdg_basedir;
 extern crate q;
 
+use std::io::{BufRead, Write};
+use std::io;
+use std::fs;
+
 
 fn main() {
     let options = clap::App::new("q")
@@ -58,5 +62,58 @@ fn main() {
         Err(error) => panic!("Cannot parse rules: {}", error)
     }
 
-    println!("Options: {}, {}, {}, {:?}", same_line, case_insensitive, filename, rules);
+    let result = process_filename(&filename, &rules, same_line);
+    if let Err(text) = result {
+        panic!(text)
+    }
+}
+
+
+fn process_filename(filename: &str, rules: &regex::Regex, same_line: bool) -> Result<bool, String> {
+    if filename == "-" {
+        let stream = io::stdin();
+        let mut reader = stream.lock();
+        process_stream(&mut reader, rules, same_line)
+    } else {
+        let file = try!(fs::File::open(filename).map_err(|e| e.to_string()));
+        let mut reader = io::BufReader::new(file);
+        process_stream(&mut reader, rules, same_line)
+    }
+}
+
+fn process_stream<R: io::BufRead>(reader: &mut R, rules: &regex::Regex, same_line: bool) -> Result<bool, String> {
+    let stdout_stream = io::stdout();
+    let mut stdout = stdout_stream.lock();
+
+    for line in reader.lines() {
+        match line {
+            Ok(content) => {
+                let matches = collect_matches(&content, rules);
+                if same_line {
+                    println!("{}", matches.connect(" "));
+                    let _ = stdout.flush();
+                } else {
+                    for matched in matches.iter() {
+                        println!("{}", matched);
+                        let _ = stdout.flush();
+                    }
+                }
+            },
+            Err(error) => return Err(error.to_string())
+        }
+    }
+
+    Ok(true)
+}
+
+fn collect_matches(content: &str, rules: &regex::Regex) -> Vec<String> {
+    let mut matches: Vec<String> = Vec::new();
+
+    for group in rules.captures_iter(content) {
+        if let Some(text) = group.at(0) {
+            matches.push(text.to_string())
+        }
+    }
+
+    matches
 }
