@@ -16,3 +16,6 @@ clap = "1.0.3"
 
 [dependencies.xdg-basedir]
 xdg-basedir = "0.2.1"
+
+[dependencies.log]
+log = "0.3.1"
