@@ -8,15 +8,20 @@ use std::io;
 use std::io::{BufRead, Write};
 
 
-
 pub fn process(filename: &str, rules: &regex::Regex, same_line: bool) -> Result<bool, String> {
     if filename == "-" {
+        info!("Filename is '-' so use stdin.");
+
         let stream = io::stdin();
         let mut reader = stream.lock();
+
         process_stream(&mut reader, rules, same_line)
     } else {
+        info!("Filename is '{}' so open a file", filename);
+
         let file = try!(fs::File::open(filename).map_err(|e| e.to_string()));
         let mut reader = io::BufReader::new(file);
+
         process_stream(&mut reader, rules, same_line)
     }
 }
@@ -29,8 +34,11 @@ fn process_stream<R: io::BufRead>(reader: &mut R, rules: &regex::Regex, same_lin
         match line {
             Ok(content) => {
                 let trimmed_content = content.trim();
+                debug!("Line: {}", trimmed_content);
 
                 let matches = collect_matches(&trimmed_content, rules);
+                debug!("Matches: {:?}", matches);
+
                 if matches.len() == 0 {
                     continue
                 }

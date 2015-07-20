@@ -1,4 +1,4 @@
-// Module for rules_parser
+// Module for rules parsing.
 
 
 extern crate regex;
@@ -13,14 +13,20 @@ use std::path;
 
 pub fn get_rules_directory(options: Option<&str>) -> Result<path::PathBuf, String> {
     if let Some(directory) = options {
-        Ok(path::PathBuf::from(directory))
+        let dir = path::PathBuf::from(directory);
+        info!("Rules directory is defined: {}.", dir.display());
+        Ok(dir)
     } else {
+        info!("Rules directory is not set, try to discover.");
         let mut config_home_dir = try!(
             xdg_basedir::get_config_home().map_err(|e| e.to_string())
         );
+        info!("Config home directory is {}", config_home_dir.display());
 
         config_home_dir.push("q");
         config_home_dir.push("rules");
+
+        info!("Calculated home directory is {}.", config_home_dir.display());
 
         Ok(config_home_dir)
     }
@@ -40,6 +46,7 @@ fn parse_rules_filenames(rules: &str, config_dir: &path::PathBuf) -> collections
             |item| {
                 let mut root_path = config_dir.clone();
                 root_path.push(item);
+                debug!("Filepath for {} is {}.", item, root_path.display());
                 root_path
             }
         )
@@ -59,6 +66,7 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
             match line {
                 Ok(content) => {
                     let trimmed_content = content.trim_right();
+                    debug!("Add {} to regexp", &trimmed_content);
                     regex_buffer.push(
                         if case_insensitive {
                             format!("(?i:{})", &trimmed_content)
@@ -78,9 +86,12 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
         }
     }
 
+    let concatenated_buffer = &regex_buffer.connect("|");
+    info!("Regexp to compile: {}", concatenated_buffer);
+
     Ok(
         try!(
-            regex::Regex::new(&regex_buffer.connect("|")).map_err(
+            regex::Regex::new(concatenated_buffer).map_err(
                 |e| format!("Cannot compile regexps: {}.", e.to_string())
             )
         )

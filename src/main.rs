@@ -1,8 +1,46 @@
-#[macro_use]
-extern crate clap;
+// App
+
+
+#[macro_use] extern crate clap;
+#[macro_use] extern crate log;
+
+extern crate q;
 extern crate regex;
 extern crate xdg_basedir;
-extern crate q;
+
+
+struct NormalLogger;
+impl log::Log for NormalLogger {
+    fn enabled(&self, metadata: &log::LogMetadata) -> bool {
+        metadata.level() <= log::LogLevel::Warn
+    }
+
+    fn log(&self, record: &log::LogRecord) {
+        if self.enabled(record.metadata()) {
+            println!("{}", record.args());
+        }
+    }
+}
+
+
+struct DebugLogger;
+impl log::Log for DebugLogger {
+    fn enabled(&self, metadata: &log::LogMetadata) -> bool {
+        metadata.level() <= log::LogLevel::Trace
+    }
+
+    fn log(&self, record: &log::LogRecord) {
+        if self.enabled(record.metadata()) {
+            println!(
+                "{level} ({file}:{line}): {message}",
+                level=record.level(),
+                file=record.location().file(),
+                line=record.location().line(),
+                message=record.args()
+            );
+        }
+    }
+}
 
 
 fn main() {
@@ -46,9 +84,10 @@ fn main() {
         )
         .get_matches();
 
+    configure_logging(options.is_present("DEBUG"));
+
     let same_line = options.is_present("SAME_LINE");
     let case_insensitive = options.is_present("CASE_INSENSITIVE");
-    let debug = options.is_present("DEBUG");
 
     let rules_directory = q::rules::get_rules_directory(options.value_of("RULES_DIRECTORY"))
         .ok()
@@ -65,8 +104,33 @@ fn main() {
         Err(error) => panic!("Cannot parse rules: {}", error)
     }
 
+    info!("Options: filename={}, rules={}, same_line={}", &filename, &rules, same_line);
+
     let result = q::process::process(&filename, &rules, same_line);
     if let Err(text) = result {
         panic!(text)
+    }
+}
+
+
+fn configure_logging(debug: bool) {
+    let result = if debug {
+        log::set_logger(
+            |max_log_level| {
+                max_log_level.set(log::LogLevelFilter::Trace);
+                Box::new(DebugLogger)
+            }
+        )
+    } else {
+        log::set_logger(
+            |max_log_level| {
+                max_log_level.set(log::LogLevelFilter::Warn);
+                Box::new(NormalLogger)
+            }
+        )
+    };
+
+    if let Err(_) = result {
+        unreachable!()
     }
 }
