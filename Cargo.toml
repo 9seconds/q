@@ -8,6 +8,11 @@ readme = "README.md"
 license = "MIT License"
 authors = ["Sergey Arkhipov <nineseconds@yandex.ru>"]
 
+[dependencies.enum-set]
+enum-set = ">= 0.0.5"
+libc = "*"
+log = "*"
+
 [dependencies.regex]
 regex = "0.1.8"
 

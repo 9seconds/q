@@ -2,13 +2,14 @@
 
 
 extern crate regex;
+extern crate pcre;
 
 use std::fs;
 use std::io;
 use std::io::{BufRead, Write};
 
 
-pub fn process(filename: &str, rules: &regex::Regex, same_line: bool) -> Result<bool, String> {
+pub fn process(filename: &str, rules: &pcre::Pcre, same_line: bool) -> Result<bool, String> {
     if filename == "-" {
         info!("Filename is '-' so use stdin.");
 
@@ -26,7 +27,7 @@ pub fn process(filename: &str, rules: &regex::Regex, same_line: bool) -> Result<
     }
 }
 
-fn process_stream<R: io::BufRead>(reader: &mut R, rules: &regex::Regex, same_line: bool) -> Result<bool, String> {
+fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line: bool) -> Result<bool, String> {
     let stdout_stream = io::stdout();
     let mut stdout = stdout_stream.lock();
 
@@ -59,14 +60,10 @@ fn process_stream<R: io::BufRead>(reader: &mut R, rules: &regex::Regex, same_lin
     Ok(true)
 }
 
-fn collect_matches(content: &str, rules: &regex::Regex) -> Vec<String> {
-    let mut matches: Vec<String> = Vec::new();
-
-    for group in rules.captures_iter(content) {
-        if let Some(text) = group.at(0) {
-            matches.push(text.to_string())
-        }
-    }
-
-    matches
+fn collect_matches(content: &str, rules: &pcre::Pcre) -> Vec<String> {
+    rules
+        .matches(content)
+        .filter(|gr| gr.group_len(0) > 0)
+        .map(|gr| gr.group(0).to_string())
+        .collect::<Vec<String>>()
 }

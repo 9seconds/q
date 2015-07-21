@@ -2,7 +2,9 @@
 
 
 extern crate regex;
+extern crate pcre;
 extern crate xdg_basedir;
+extern crate enum_set;
 
 use std::collections;
 use std::fs;
@@ -33,7 +35,7 @@ pub fn get_rules_directory(options: Option<&str>) -> Result<path::PathBuf, Strin
 }
 
 
-pub fn get_rules(rules_directory: &path::PathBuf, rules_str: &str, case_insensitive: bool) -> Result<regex::Regex, String> {
+pub fn get_rules(rules_directory: &path::PathBuf, rules_str: &str, case_insensitive: bool) -> Result<pcre::Pcre, String> {
     let filenames = parse_rules_filenames(rules_str, rules_directory);
     parse_rules(&filenames, case_insensitive)
 }
@@ -54,7 +56,7 @@ fn parse_rules_filenames(rules: &str, config_dir: &path::PathBuf) -> collections
 }
 
 
-fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive: bool) -> Result<regex::Regex, String> {
+fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive: bool) -> Result<pcre::Pcre, String> {
     let mut regex_buffer: Vec<String> = Vec::with_capacity(filenames.len() * 2);
 
     for filename in filenames.iter() {
@@ -67,13 +69,14 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
                 Ok(content) => {
                     let trimmed_content = content.trim_right();
                     debug!("Add {} to regexp", &trimmed_content);
-                    regex_buffer.push(
-                        if case_insensitive {
-                            format!("(?i:{})", &trimmed_content)
-                        } else {
-                            format!("({})", &trimmed_content)
-                        }
-                    )
+                    regex_buffer.push(trimmed_content.to_string());
+                    // regex_buffer.push(
+                    //     if case_insensitive {
+                    //         format!("(?i:{})", &trimmed_content)
+                    //     } else {
+                    //         format!("({})", &trimmed_content)
+                    //     }
+                    // )
                 },
                 Err(error) => return Err(
                     format!(
@@ -89,9 +92,14 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
     let concatenated_buffer = &regex_buffer.connect("|");
     info!("Regexp to compile: {}", concatenated_buffer);
 
+    let mut regex_options: enum_set::EnumSet<pcre::CompileOption> = enum_set::EnumSet::new();
+    if case_insensitive {
+        regex_options.insert(pcre::CompileOption::Caseless);
+    }
+
     Ok(
         try!(
-            regex::Regex::new(concatenated_buffer).map_err(
+            pcre::Pcre::compile_with_options(concatenated_buffer, &regex_options).map_err(
                 |e| format!("Cannot compile regexps: {}.", e.to_string())
             )
         )

@@ -6,6 +6,7 @@
 
 extern crate q;
 extern crate regex;
+extern crate pcre;
 extern crate xdg_basedir;
 
 
@@ -96,7 +97,7 @@ fn main() {
         .value_of("FILE")
         .unwrap_or("-");
 
-    let rules: regex::Regex;
+    let rules: pcre::Pcre;
     match q::rules::get_rules(
         &rules_directory, options.value_of("RULES").unwrap(), case_insensitive
     ) {
@@ -104,7 +105,7 @@ fn main() {
         Err(error) => panic!("Cannot parse rules: {}", error)
     }
 
-    info!("Options: filename={}, rules={}, same_line={}", &filename, &rules, same_line);
+    info!("Options: filename={}, rules={:?}, same_line={}", &filename, &rules, same_line);
 
     let result = q::process::process(&filename, &rules, same_line);
     if let Err(text) = result {
