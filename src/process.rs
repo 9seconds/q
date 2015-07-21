@@ -44,17 +44,16 @@ fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line:
                 }
                 if same_line {
                     println!("{}", matches.connect(" "));
-                    let _ = stdout.flush();
                 } else {
                     for matched in matches.iter() {
                         println!("{}", matched);
-                        let _ = stdout.flush();
                     }
                 }
             },
             Err(error) => return Err(error.to_string())
         }
     }
+    let _ = stdout.flush();
 
     Ok(true)
 }
