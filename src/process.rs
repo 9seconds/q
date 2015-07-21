@@ -1,7 +1,6 @@
 // Module for stream processing
 
 
-extern crate regex;
 extern crate pcre;
 
 use std::fs;

@@ -5,7 +5,6 @@
 #[macro_use] extern crate log;
 
 extern crate q;
-extern crate regex;
 extern crate pcre;
 extern crate xdg_basedir;
 

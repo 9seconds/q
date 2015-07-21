@@ -1,7 +1,6 @@
 // Module for rules parsing.
 
 
-extern crate regex;
 extern crate pcre;
 extern crate xdg_basedir;
 extern crate enum_set;
@@ -70,13 +69,6 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
                     let trimmed_content = content.trim_right();
                     debug!("Add {} to regexp", &trimmed_content);
                     regex_buffer.push(trimmed_content.to_string());
-                    // regex_buffer.push(
-                    //     if case_insensitive {
-                    //         format!("(?i:{})", &trimmed_content)
-                    //     } else {
-                    //         format!("({})", &trimmed_content)
-                    //     }
-                    // )
                 },
                 Err(error) => return Err(
                     format!(

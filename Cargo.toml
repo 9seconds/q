@@ -13,9 +13,6 @@ enum-set = ">= 0.0.5"
 libc = "*"
 log = "*"
 
-[dependencies.regex]
-regex = "0.1.8"
-
 [dependencies.clap]
 clap = "1.0.3"
 
