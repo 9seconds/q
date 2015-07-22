@@ -40,6 +40,7 @@ pub fn get_rules(rules_directory: &path::PathBuf, rules_str: &str, case_insensit
 }
 
 
+#[inline]
 fn parse_rules_filenames(rules: &str, config_dir: &path::PathBuf) -> collections::HashSet<path::PathBuf> {
     rules
         .split(",")
@@ -66,7 +67,12 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
         for line in reader.lines() {
             match line {
                 Ok(content) => {
-                    let trimmed_content = content.trim_right();
+                    let trimmed_content = content.trim();
+
+                    if trimmed_content == "" {
+                        continue
+                    }
+
                     debug!("Add {} to regexp", &trimmed_content);
                     regex_buffer.push(trimmed_content.to_string());
                 },

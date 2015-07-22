@@ -58,10 +58,16 @@ fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line:
     Ok(true)
 }
 
+#[inline]
 fn collect_matches(content: &str, rules: &pcre::Pcre) -> Vec<String> {
     rules
         .matches(content)
-        .filter(|gr| gr.group_len(0) > 0)
-        .map(|gr| gr.group(0).to_string())
+        .filter_map(|gr| {
+            if gr.group_len(0) > 0 {
+                Some(gr.group(0).to_string())
+            } else {
+                None
+            }
+        })
         .collect::<Vec<String>>()
 }
