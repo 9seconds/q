@@ -9,6 +9,11 @@ extern crate q;
 use q::gentle_panic::GentlePanic;
 
 
+const EX_CANNOT_FIND_RULES_DIRECTORY: i32 = 70;
+const EX_CANNOT_PARSE_RULES: i32 = 71;
+const EX_CANNOT_PROCESS_STREAM: i32 = 72;
+
+
 fn main() {
     let options = clap::App::new("q")
         .author("Sergey Arkhipov <nineseconds@yandex.ru>")
@@ -59,15 +64,15 @@ fn main() {
         .unwrap_or("-");
 
     let rules_directory = q::rules::get_rules_directory(options.value_of("RULES_DIRECTORY"))
-        .get_or_die_with(70, "Cannot discover rules directory!");
+        .get_or_die_with(EX_CANNOT_FIND_RULES_DIRECTORY, "Cannot discover rules directory!");
 
     let rules = q::rules::get_rules(
         &rules_directory, options.value_of("RULES").unwrap(), case_insensitive
     )
-    .get_or_die_with(70, "Cannot parse rules");
+    .get_or_die_with(EX_CANNOT_PARSE_RULES, "Cannot parse rules");
 
     info!("Options: filename={}, rules={:?}, same_line={}", &filename, &rules, same_line);
 
     let _ = q::process::process(&filename, &rules, same_line)
-        .get_or_die_with(70, "Cannot process stream");
+        .get_or_die_with(EX_CANNOT_PROCESS_STREAM, "Cannot process stream");
 }
