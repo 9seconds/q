@@ -8,25 +8,25 @@ use std::io;
 use std::io::{BufRead, Write};
 
 
-pub fn process(filename: &str, rules: &pcre::Pcre, same_line: bool) -> Result<bool, String> {
+pub fn process(filename: &str, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> Result<bool, String> {
     if filename == "-" {
         info!("Filename is '-' so use stdin.");
 
         let stream = io::stdin();
         let mut reader = stream.lock();
 
-        process_stream(&mut reader, rules, same_line)
+        process_stream(&mut reader, rules, same_line, matches_only)
     } else {
         info!("Filename is '{}' so open a file", filename);
 
         let file = try!(fs::File::open(filename).map_err(|e| e.to_string()));
         let mut reader = io::BufReader::new(file);
 
-        process_stream(&mut reader, rules, same_line)
+        process_stream(&mut reader, rules, same_line, matches_only)
     }
 }
 
-fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line: bool) -> Result<bool, String> {
+fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> Result<bool, String> {
     let stdout_stream = io::stdout();
     let mut stdout = stdout_stream.lock();
 
@@ -36,17 +36,21 @@ fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line:
                 let trimmed_content = content.trim();
                 debug!("Line: {}", trimmed_content);
 
-                let matches = collect_matches(&trimmed_content, rules);
-                debug!("Matches: {:?}", matches);
+                if matches_only {
+                    let matches = collect_matches(&trimmed_content, rules);
+                    debug!("Matches: {:?}", matches);
 
-                if matches.len() == 0 {
-                    continue
-                }
-                if same_line {
-                    println!("{}", matches.connect(" "));
+                    if matches.len() == 0 { continue }
+                    if same_line {
+                        println!("{}", matches.connect(" "));
+                    } else {
+                        for matched in matches.iter() {
+                            println!("{}", matched);
+                        }
+                    }
                 } else {
-                    for matched in matches.iter() {
-                        println!("{}", matched);
+                    if rules.exec(&trimmed_content).is_some() {
+                        println!("{}", &trimmed_content)
                     }
                 }
             },

@@ -22,12 +22,17 @@ fn main() {
         .after_help("Please find more documentation at https://github.com/9seconds/q.")
         .arg(
             clap::Arg::with_name("SAME_LINE")
-                .help("Keep matches on the same line")
+                .help("Keep matches on the same line.")
                 .short("l")
                 .long("same_line")
         ).arg(
+            clap::Arg::with_name("MATCHES_ONLY")
+                .help("Print matches only, not whole line.")
+                .short("m")
+                .long("matches-only")
+        ).arg(
             clap::Arg::with_name("DEBUG")
-                .help("Run q in debug mode")
+                .help("Run q in debug mode.")
                 .short("d")
                 .long("debug")
         ).arg(
@@ -37,7 +42,7 @@ fn main() {
                 .long("case-insensitive")
         ).arg(
             clap::Arg::with_name("RULES_DIRECTORY")
-                .help("Directory where rules could be found. By default it uses $XDG_CONFIG_HOME/q/rules")
+                .help("Directory where rules could be found. By default it uses $XDG_CONFIG_HOME/q/rules.")
                 .short("-r")
                 .long("rules")
                 .takes_value(true)
@@ -59,20 +64,17 @@ fn main() {
 
     let same_line = options.is_present("SAME_LINE");
     let case_insensitive = options.is_present("CASE_INSENSITIVE");
-    let filename = options
-        .value_of("FILE")
-        .unwrap_or("-");
+    let matches_only = options.is_present("MATCHES_ONLY");
+    let filename = options.value_of("FILE").unwrap_or("-");
 
     let rules_directory = q::rules::get_rules_directory(options.value_of("RULES_DIRECTORY"))
         .get_or_die_with(EX_CANNOT_FIND_RULES_DIRECTORY, "Cannot discover rules directory!");
 
-    let rules = q::rules::get_rules(
-        &rules_directory, options.value_of("RULES").unwrap(), case_insensitive
-    )
-    .get_or_die_with(EX_CANNOT_PARSE_RULES, "Cannot parse rules");
+    let rules = q::rules::get_rules(&rules_directory, options.value_of("RULES").unwrap(), case_insensitive)
+        .get_or_die_with(EX_CANNOT_PARSE_RULES, "Cannot parse rules");
 
     info!("Options: filename={}, rules={:?}, same_line={}", &filename, &rules, same_line);
 
-    let _ = q::process::process(&filename, &rules, same_line)
+    let _ = q::process::process(&filename, &rules, same_line, matches_only)
         .get_or_die_with(EX_CANNOT_PROCESS_STREAM, "Cannot process stream");
 }
