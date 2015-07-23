@@ -13,17 +13,9 @@ enum-set = ">= 0.0.5"
 libc = "*"
 log = "*"
 
-[dependencies.clap]
+[dependencies]
 clap = "1.0.3"
-
-[dependencies.xdg-basedir]
 xdg-basedir = "0.2.1"
-
-[dependencies.log]
 log = "0.3.1"
-
-[dependencies.pcre]
 pcre = "0.1.1"
-
-[dependencies.glob]
 glob = "0.2.10"
