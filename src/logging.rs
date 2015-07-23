@@ -7,7 +7,7 @@ extern crate log;
 struct NormalLogger;
 impl log::Log for NormalLogger {
     fn enabled(&self, metadata: &log::LogMetadata) -> bool {
-        metadata.level() <= log::LogLevel::Warn
+        metadata.level() <= log::LogLevel::Error
     }
 
     fn log(&self, record: &log::LogRecord) {
