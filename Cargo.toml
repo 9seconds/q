@@ -27,6 +27,3 @@ pcre = "0.1.1"
 
 [dependencies.glob]
 glob = "0.2.10"
-
-[dependencies.eventual]
-eventual = "0.1.3"
