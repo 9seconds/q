@@ -6,11 +6,88 @@ extern crate pcre;
 use std::io;
 use std::io::BufRead;
 use std::path;
+use std::borrow;
+use std::borrow::Borrow;
 
 use super::filenames;
 
 
-pub fn process(filenames: &Vec<path::PathBuf>, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> bool {
+struct Printer<'f, 'r> {
+    filename: &'f str,
+    regex: &'r pcre::Pcre,
+    same_line: bool,
+    matches_only: bool,
+    line_numbers: bool
+}
+
+impl<'f, 'r> Printer<'f, 'r> {
+    fn new(filename: &'f str, regex: &'r pcre::Pcre, same_line: bool, matches_only: bool, line_numbers: bool) -> Printer<'f, 'r> {
+        Printer{
+            filename: filename,
+            regex: regex,
+            same_line: same_line,
+            matches_only: matches_only,
+            line_numbers: line_numbers
+        }
+    }
+
+    #[inline]
+    fn get_line_prefix(&self, line_number: usize) -> borrow::Cow<'static, str> {
+        if self.line_numbers {
+            format!("{}:{}\t", self.filename, line_number).into()
+        } else {
+            "".into()
+        }
+    }
+
+    #[inline]
+    fn print_line(&self, content: &str, line_number: usize) {
+        println!("{}{}", self.get_line_prefix(line_number), content)
+    }
+
+    #[inline]
+    fn print(&self, content: &str, line_number: usize) {
+        if self.matches_only {
+            let matches = self.collect_matches(content);
+            debug!("Matches for {} are {:?}", content, &matches);
+            self.show_matches(&matches, line_number)
+        } else {
+            if self.regex.exec(&content).is_some() {
+                self.print_line(content, line_number)
+            }
+        }
+    }
+
+    #[inline]
+    fn show_matches(&self, matches: &Vec<String>, line_number: usize) {
+        if matches.len() > 0 {
+            if self.same_line {
+                self.print_line(&matches.connect(" "), line_number)
+            } else {
+                for item in matches.iter() {
+                    self.print_line(&item, line_number)
+                }
+            }
+        }
+    }
+
+    #[inline]
+    fn collect_matches(&self, content: &str) -> Vec<String> {
+        self.regex
+            .matches(content)
+            .filter_map(|gr| {
+                if gr.group_len(0) > 0 {
+                    Some(gr.group(0).to_string())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<String>>()
+    }
+}
+
+
+pub fn process(filenames: &Vec<path::PathBuf>, rules: &pcre::Pcre, same_line: bool, matches_only: bool, line_numbers: bool) -> bool {
     let mut success = true;
 
     if filenames.len() == 0 {
@@ -18,15 +95,19 @@ pub fn process(filenames: &Vec<path::PathBuf>, rules: &pcre::Pcre, same_line: bo
 
         let stream = io::stdin();
         let mut reader = stream.lock();
+        let printer = Printer::new("", rules, same_line, matches_only, line_numbers);
 
-        success = process_stream(&mut reader, rules, same_line, matches_only);
+        success = process_stream(&mut reader, &printer);
     } else {
         for filename in filenames.iter() {
             info!("Filename is '{}' so open a file", filename.display());
 
             if let Some(file) = filenames::open_if_file(filename.as_path()) {
                 let mut reader = io::BufReader::new(file);
-                success &= process_stream(&mut reader, rules, same_line, matches_only);
+                let printable_name = filename.to_string_lossy();
+                let printer = Printer::new(printable_name.borrow(), rules, same_line, matches_only, line_numbers);
+
+                success &= process_stream(&mut reader, &printer);
             } else {
                 success = false;
             }
@@ -36,32 +117,15 @@ pub fn process(filenames: &Vec<path::PathBuf>, rules: &pcre::Pcre, same_line: bo
     success
 }
 
-fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> bool {
+fn process_stream<R: io::BufRead>(reader: &mut R, printer: &Printer) -> bool {
     let mut success = true;
 
-    for line in reader.lines() {
+    for (line_number, line) in reader.lines().enumerate() {
         match line {
             Ok(content) => {
                 let trimmed_content = content.trim();
                 debug!("Line: {}", trimmed_content);
-
-                if matches_only {
-                    let matches = collect_matches(&trimmed_content, rules);
-                    debug!("Matches: {:?}", matches);
-
-                    if matches.len() == 0 { continue }
-                    if same_line {
-                        println!("{}", matches.connect(" "));
-                    } else {
-                        for matched in matches.iter() {
-                            println!("{}", matched);
-                        }
-                    }
-                } else {
-                    if rules.exec(&trimmed_content).is_some() {
-                        println!("{}", &trimmed_content)
-                    }
-                }
+                printer.print(&trimmed_content, line_number + 1);
             },
             Err(error) => {
                 warn!("{}", error);
@@ -71,18 +135,4 @@ fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line:
     }
 
     success
-}
-
-#[inline]
-fn collect_matches(content: &str, rules: &pcre::Pcre) -> Vec<String> {
-    rules
-        .matches(content)
-        .filter_map(|gr| {
-            if gr.group_len(0) > 0 {
-                Some(gr.group(0).to_string())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<String>>()
 }

@@ -29,6 +29,11 @@ fn main() {
                 .short("l")
                 .long("same_line")
         ).arg(
+            clap::Arg::with_name("LINE_NUMBERS")
+                .help("Print line numbers and filenames")
+                .short("n")
+                .long("line-numbers")
+        ).arg(
             clap::Arg::with_name("MATCHES_ONLY")
                 .help("Print matches only, not whole line.")
                 .short("o")
@@ -67,6 +72,8 @@ fn main() {
     let same_line = options.is_present("SAME_LINE");
     let case_insensitive = options.is_present("CASE_INSENSITIVE");
     let matches_only = options.is_present("MATCHES_ONLY");
+    let line_numbers = options.is_present("LINE_NUMBERS");
+
     let filenames = q::filenames::extract(options.values_of("FILES"))
         .get_or_die_with(EX_CANNOT_PROCESS_GLOB_PATTERNS, "Some problems with glob patters you set, please check");
 
@@ -75,9 +82,10 @@ fn main() {
     let rules = q::rules::get_rules(&rules_directory, options.value_of("RULES").unwrap(), case_insensitive)
         .get_or_die_with(EX_CANNOT_PARSE_RULES, "Cannot parse rules");
 
-    info!("Options: filenames={:?}, rules={:?}, same_line={}", &filenames, &rules, same_line);
+    info!("Options: filenames={:?}, rules={:?}, same_line={}, matches_only={}, line_numbers={}",
+          &filenames, &rules, same_line, matches_only, line_numbers);
 
-    if !q::process::process(&filenames, &rules, same_line, matches_only) {
+    if !q::process::process(&filenames, &rules, same_line, matches_only, line_numbers) {
         process::exit(EX_CANNOT_PROCESS_STREAM)
     }
 }
