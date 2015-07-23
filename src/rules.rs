@@ -1,9 +1,9 @@
 // Module for rules parsing.
 
 
+extern crate enum_set;
 extern crate pcre;
 extern crate xdg_basedir;
-extern crate enum_set;
 
 use std::collections;
 use std::io;

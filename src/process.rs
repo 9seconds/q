@@ -12,6 +12,9 @@ use std::path;
 use super::filenames;
 
 
+static PATTERNS_TO_TRIM: &'static [char] = &['\r', '\n'];
+
+
 struct Printer<'f, 'r> {
     filename: &'f str,
     regex: &'r pcre::Pcre,
@@ -79,13 +82,7 @@ impl<'f, 'r> Printer<'f, 'r> {
     fn collect_matches(&self, content: &str) -> Vec<String> {
         self.regex
             .matches(content)
-            .filter_map(|gr| {
-                if gr.group_len(0) > 0 {
-                    Some(gr.group(0).to_string())
-                } else {
-                    None
-                }
-            })
+            .map(|gr| gr.group(0).to_string())
             .collect::<Vec<String>>()
     }
 }
@@ -121,13 +118,14 @@ pub fn process(filenames: &Vec<path::PathBuf>, rules: &pcre::Pcre, same_line: bo
     success
 }
 
+
 fn process_stream<R: io::BufRead>(reader: &mut R, printer: &Printer) -> bool {
     let mut success = true;
 
     for (line_number, line) in reader.lines().enumerate() {
         match line {
             Ok(content) => {
-                let trimmed_content = content.trim();
+                let trimmed_content = content.trim_right_matches(PATTERNS_TO_TRIM);
                 debug!("Line: {}", trimmed_content);
                 printer.print(&trimmed_content, line_number + 1);
             },
