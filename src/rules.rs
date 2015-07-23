@@ -62,33 +62,36 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
 
     for filename in filenames.iter() {
         let path = filename.as_path();
-        let file = filenames::open_if_file(path);
+        if let Some(file) = filenames::open_if_file(path) {
+            let reader = io::BufReader::new(file);
 
-        if file.is_none() {
-            continue
-        }
-        let reader = io::BufReader::new(file.unwrap());
+            for line in reader.lines() {
+                match line {
+                    Ok(content) => {
+                        let trimmed_content = content.trim();
 
-        for line in reader.lines() {
-            match line {
-                Ok(content) => {
-                    let trimmed_content = content.trim();
+                        if trimmed_content == "" {
+                            continue
+                        }
 
-                    if trimmed_content == "" {
-                        continue
-                    }
-
-                    debug!("Add {} to regexp", &trimmed_content);
-                    regex_buffer.push(trimmed_content.to_string());
-                },
-                Err(error) => return Err(
-                    format!(
-                        "Cannot fetch a line from file {}: {}!",
-                        path.display(),
-                        error.to_string()
+                        debug!("Add {} to regexp", &trimmed_content);
+                        regex_buffer.push(trimmed_content.to_string());
+                    },
+                    Err(error) => return Err(
+                        format!(
+                            "Cannot fetch a line from file {}: {}!",
+                            path.display(),
+                            error.to_string()
+                        )
                     )
-                )
+                }
             }
+        } else {
+            return Err(
+                format!(
+                    "Cannot process file {} with fules", path.display()
+                )
+            )
         }
     }
 

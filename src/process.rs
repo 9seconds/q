@@ -24,13 +24,12 @@ pub fn process(filenames: &Vec<path::PathBuf>, rules: &pcre::Pcre, same_line: bo
         for filename in filenames.iter() {
             info!("Filename is '{}' so open a file", filename.display());
 
-            let file = filenames::open_if_file(filename.as_path());
-            if file.is_none() {
-                continue
+            if let Some(file) = filenames::open_if_file(filename.as_path()) {
+                let mut reader = io::BufReader::new(file);
+                success &= process_stream(&mut reader, rules, same_line, matches_only);
+            } else {
+                success = false;
             }
-            let mut reader = io::BufReader::new(file.unwrap());
-
-            success &= process_stream(&mut reader, rules, same_line, matches_only);
         }
     };
 
