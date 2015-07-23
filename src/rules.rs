@@ -75,7 +75,7 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
                         }
 
                         debug!("Add {} to regexp", &trimmed_content);
-                        regex_buffer.push(trimmed_content.to_string());
+                        regex_buffer.push(format!("(?:{})", &trimmed_content));
                     },
                     Err(error) => return Err(
                         format!(
