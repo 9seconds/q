@@ -8,3 +8,4 @@ pub mod rules;
 pub mod process;
 pub mod gentle_panic;
 pub mod logging;
+pub mod filenames;

@@ -6,12 +6,15 @@
 
 extern crate q;
 
+use std::process;
+
 use q::gentle_panic::GentlePanic;
 
 
 const EX_CANNOT_FIND_RULES_DIRECTORY: i32 = 70;
-const EX_CANNOT_PARSE_RULES: i32 = 71;
-const EX_CANNOT_PROCESS_STREAM: i32 = 72;
+const EX_CANNOT_PROCESS_GLOB_PATTERNS: i32 = 71;
+const EX_CANNOT_PARSE_RULES: i32 = 72;
+const EX_CANNOT_PROCESS_STREAM: i32 = 73;
 
 
 fn main() {
@@ -28,7 +31,7 @@ fn main() {
         ).arg(
             clap::Arg::with_name("MATCHES_ONLY")
                 .help("Print matches only, not whole line.")
-                .short("m")
+                .short("o")
                 .long("matches-only")
         ).arg(
             clap::Arg::with_name("DEBUG")
@@ -47,16 +50,15 @@ fn main() {
                 .long("rules")
                 .takes_value(true)
         ).arg(
-            clap::Arg::with_name("FILE")
-                .help("File to process. Use '-' to read from stdin (default is stdin).")
-                .short("-f")
-                .long("file")
-                .takes_value(true)
-        ).arg(
             clap::Arg::with_name("RULES")
                 .help("Regexp rules to apply to the stdin as a comma-separated list.")
                 .index(1)
                 .required(true)
+        ).arg(
+            clap::Arg::with_name("FILES")
+                .help("Files to process. If no file is specified then q will consume stdin.")
+                .index(2)
+                .multiple(true)
         )
         .get_matches();
 
@@ -65,16 +67,17 @@ fn main() {
     let same_line = options.is_present("SAME_LINE");
     let case_insensitive = options.is_present("CASE_INSENSITIVE");
     let matches_only = options.is_present("MATCHES_ONLY");
-    let filename = options.value_of("FILE").unwrap_or("-");
+    let filenames = q::filenames::extract(options.values_of("FILES"))
+        .get_or_die_with(EX_CANNOT_PROCESS_GLOB_PATTERNS, "Some problems with glob patters you set, please check");
 
     let rules_directory = q::rules::get_rules_directory(options.value_of("RULES_DIRECTORY"))
         .get_or_die_with(EX_CANNOT_FIND_RULES_DIRECTORY, "Cannot discover rules directory!");
-
     let rules = q::rules::get_rules(&rules_directory, options.value_of("RULES").unwrap(), case_insensitive)
         .get_or_die_with(EX_CANNOT_PARSE_RULES, "Cannot parse rules");
 
-    info!("Options: filename={}, rules={:?}, same_line={}", &filename, &rules, same_line);
+    info!("Options: filenames={:?}, rules={:?}, same_line={}", &filenames, &rules, same_line);
 
-    let _ = q::process::process(&filename, &rules, same_line, matches_only)
-        .get_or_die_with(EX_CANNOT_PROCESS_STREAM, "Cannot process stream");
+    if !q::process::process(&filenames, &rules, same_line, matches_only) {
+        process::exit(EX_CANNOT_PROCESS_STREAM)
+    }
 }

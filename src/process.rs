@@ -3,32 +3,42 @@
 
 extern crate pcre;
 
-use std::fs;
 use std::io;
-use std::io::{BufRead, Write};
+use std::io::BufRead;
+use std::path;
+
+use super::filenames;
 
 
-pub fn process(filename: &str, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> Result<bool, String> {
-    if filename == "-" {
+pub fn process(filenames: &Vec<path::PathBuf>, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> bool {
+    let mut success = true;
+
+    if filenames.len() == 0 {
         info!("Filename is '-' so use stdin.");
 
         let stream = io::stdin();
         let mut reader = stream.lock();
 
-        process_stream(&mut reader, rules, same_line, matches_only)
+        success = process_stream(&mut reader, rules, same_line, matches_only);
     } else {
-        info!("Filename is '{}' so open a file", filename);
+        for filename in filenames.iter() {
+            info!("Filename is '{}' so open a file", filename.display());
 
-        let file = try!(fs::File::open(filename).map_err(|e| e.to_string()));
-        let mut reader = io::BufReader::new(file);
+            let file = filenames::open_if_file(filename.as_path());
+            if file.is_none() {
+                continue
+            }
+            let mut reader = io::BufReader::new(file.unwrap());
 
-        process_stream(&mut reader, rules, same_line, matches_only)
-    }
+            success &= process_stream(&mut reader, rules, same_line, matches_only);
+        }
+    };
+
+    success
 }
 
-fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> Result<bool, String> {
-    let stdout_stream = io::stdout();
-    let mut stdout = stdout_stream.lock();
+fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line: bool, matches_only: bool) -> bool {
+    let mut success = true;
 
     for line in reader.lines() {
         match line {
@@ -54,12 +64,14 @@ fn process_stream<R: io::BufRead>(reader: &mut R, rules: &pcre::Pcre, same_line:
                     }
                 }
             },
-            Err(error) => return Err(error.to_string())
+            Err(error) => {
+                warn!("{}", error);
+                success = false;
+            }
         }
     }
-    let _ = stdout.flush();
 
-    Ok(true)
+    success
 }
 
 #[inline]

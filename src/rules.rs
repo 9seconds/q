@@ -6,10 +6,11 @@ extern crate xdg_basedir;
 extern crate enum_set;
 
 use std::collections;
-use std::fs;
 use std::io;
 use std::io::BufRead;
 use std::path;
+
+use super::filenames;
 
 
 pub fn get_rules_directory(options: Option<&str>) -> Result<path::PathBuf, String> {
@@ -61,8 +62,12 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
 
     for filename in filenames.iter() {
         let path = filename.as_path();
-        let file = try!(fs::File::open(path).map_err(|e| e.to_string()));
-        let reader = io::BufReader::new(file);
+        let file = filenames::open_if_file(path);
+
+        if file.is_none() {
+            continue
+        }
+        let reader = io::BufReader::new(file.unwrap());
 
         for line in reader.lines() {
             match line {
