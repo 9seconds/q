@@ -27,7 +27,7 @@ fn main() {
             clap::Arg::with_name("SAME_LINE")
                 .help("Keep matches on the same line.")
                 .short("l")
-                .long("same_line")
+                .long("same-line")
         ).arg(
             clap::Arg::with_name("LINE_NUMBERS")
                 .help("Print line numbers and filenames")
