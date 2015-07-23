@@ -3,11 +3,11 @@
 
 extern crate pcre;
 
+use std::borrow;
+use std::borrow::Borrow;
 use std::io;
 use std::io::BufRead;
 use std::path;
-use std::borrow;
-use std::borrow::Borrow;
 
 use super::filenames;
 
@@ -34,7 +34,11 @@ impl<'f, 'r> Printer<'f, 'r> {
     #[inline]
     fn get_line_prefix(&self, line_number: usize) -> borrow::Cow<'static, str> {
         if self.line_numbers {
-            format!("{}:{}\t", self.filename, line_number).into()
+            if self.filename != "" {
+                format!("{}:{}\t", self.filename, line_number).into()
+            } else {
+                format!("{}\t", line_number).into()
+            }
         } else {
             "".into()
         }
