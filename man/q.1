@@ -1,31 +1,26 @@
 .\" Manpage for q.
 .\" Contact nineseconds@yandex.ru to correct errors or typos.
 .TH man 1 "22 Jul 2015" "0.1.0" "q - Search through the pipes with presets of regular expressions"
-
 .SH NAME
 q is a gentle way to grep using predefined regexp sets.
-
 .SH SYNOPSIS
 q [FLAGS] [OPTIONS] <RULES>
-
 .SH DESCRIPTION
 q is great.
-
 .SH FLAGS
 Here is the list of current supported flags.
-.PP
     -i, --case-insensitive    Use case insensitive regex versions.
     -d, --debug               Run q in debug mode.
-    -m, --matches-only        Print matches only, not whole line.
-    -l, --same_line           Keep matches on the same line.
+    -n, --line-numbers        Print line numbers and filenames
+    -o, --matches-only        Print matches only, not whole line.
+    -l, --same-line           Keep matches on the same line.
     -h, --help                Prints help information
     -V, --version             Prints version information
-
 .SH OPTIONS
-Here is the list of current supported options.
-.PP
-    -f, --file <FILE>                File to process. Use '-' to read from stdin (default is stdin).
-    -r, --rules <RULES_DIRECTORY>    Directory where rules could be found. By default it uses $XDG_CONFIG_HOME/q/rules.
+    RULES       Regexp rules to apply to the stdin as a comma-separated list.
+    FILES...    Files to process. If no file is specified then q will consume stdin.
+.SH EXAMPLES
+
 
 .SH AUTHOR
 Sergey Arkhipov (nineseconds@yandex.ru) / https://github.com/9seconds/q
