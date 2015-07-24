@@ -6,6 +6,7 @@ extern crate pcre;
 extern crate xdg_basedir;
 
 use std::collections;
+use std::fs;
 use std::io;
 use std::io::BufRead;
 use std::path;
@@ -38,6 +39,33 @@ pub fn get_rules_directory(options: Option<&str>) -> Result<path::PathBuf, Strin
 pub fn get_rules(rules_directory: &path::PathBuf, rules_str: &str, case_insensitive: bool) -> Result<pcre::Pcre, String> {
     let filenames = parse_rules_filenames(rules_str, rules_directory);
     parse_rules(&filenames, case_insensitive)
+}
+
+
+pub fn list(rules_directory: &path::PathBuf) -> Result<Vec<String>, String> {
+    let dir_content = try!(fs::read_dir(rules_directory).map_err(|e| e.to_string()));
+    let mut content = Vec::<String>::new();
+
+    for entry in dir_content {
+        let entry = try!(entry.map_err(|e| e.to_string()));
+        let path = entry.path();
+        let metadata = try!(fs::metadata(&path).map_err(|e| e.to_string()));
+        if metadata.is_dir() {
+            continue
+        }
+        let filename = path.file_name().unwrap().to_os_string().into_string().unwrap();
+
+        if filename == "LICENSE" || filename == "README.md" {
+            continue
+        }
+
+        content.push(filename);
+    }
+
+    content.sort();
+    content.dedup();
+
+    Ok(content)
 }
 
 
