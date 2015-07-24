@@ -6,9 +6,36 @@ q is a gentle way to grep using predefined regexp sets.
 .SH SYNOPSIS
 q [FLAGS] [OPTIONS] <RULES>
 .SH DESCRIPTION
-q is great.
+q is a tool for grepping your files with a some predefined and named sets of regular expressions. The usage is quite simple and rather "greppy", even options are similar. But you do not enter pattern for a text stream to match, you just name it. After that q will look this name (actually, it is just a file name in $XDG_CONFIG_HOME/q/rules by default), read it and search with it.
+
+Also, it is possible to use several named regular expression sets, just put them in comma separated list and you are done. Let's just check an example:
+
+    $ q url,ipv4,ipv6 /var/log/httpd/*log
+
+q will use regular expressions, defined in files "url", "ipv4", "ipv6" and apply them to every log file in Apache log directory. So you do not need to compose big regexp for URL, IPv4 and IPv6 and stream log files through them.
+
+.SH REGEXP FILES
+By default q will search for regexp files in $XDG_CONFIG_HOME/q/rules. If you do not have XDG_CONFIG_HOME set, it would be $HOME/.config/q/rules. So if you do
+
+    $ q url,ipv4,ipv6 /var/log/httpd/*log
+
+q will use following regexp files:
+
+    $XDG_CONFIG_HOME/q/rules/url
+    $XDG_CONFIG_HOME/q/rules/ipv4
+    $XDG_CONFIG_HOME/q/rules/ipv6
+
+The structure of these files are rather simple: they just contain regular expressions as is. q uses PCRE for regular expressions, not RE2 or any other syntax so be sure that your regexps are PCRE compatible.
+
+Just like an example of UUID4 file
+
+    $ cat $XDG_CONFIG_HOME/q/rules/uuid4
+    [a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}
+
+So it is just a regexp inside. If you want to define several regular expressions inside one file it is possible, just put every regular expression on the new line. One line per regular expressions. And do not bother with pipes, q will assembly complete valid expression for you in a runtime.
 .SH FLAGS
 Here is the list of current supported flags.
+
     -i, --case-insensitive    Use case insensitive regex versions.
     -d, --debug               Run q in debug mode.
     -n, --line-numbers        Print line numbers and filenames
@@ -16,11 +43,52 @@ Here is the list of current supported flags.
     -l, --same-line           Keep matches on the same line.
     -h, --help                Prints help information
     -V, --version             Prints version information
+
+    Now for every flag:
+        -i    Regular expressions may be case sensitive but if you do not
+              want such behaviour, use this option. Then regexp "[a]" will
+              perfectly match both "a" and "A".
+        -d    Enables debug output. Usually you do not need this but if you
+              want me to understand why q won't work for your case, run it
+              in debug mode and send me an output.
+        -n    Sometimes you need to know not only match, but a line number or
+              filename (if q process several files). Use this option to get
+              have this information.
+        -o    By default q will print whole line where matches were found. If
+              you want just to have matches, use this option.
+        -l    Makes sense with -o only. By default -o will print one match per
+              line but if you want to have them on the same line, use this
+              option.
 .SH OPTIONS
     RULES       Regexp rules to apply to the stdin as a comma-separated list.
     FILES...    Files to process. If no file is specified then q will consume stdin.
 .SH EXAMPLES
+Let's imagine we have a test file like that
 
+    $ cat somefile.txt
+    Lorem ipsum http://google.com 127.0.0.1
+    e7f71ed0-77a3-42b2-b9f8-296816defd82 and the rest of the file
 
+Let's run q with different options:
+
+    $ q url somefile.txt
+    Lorem ipsum http://google.com 127.0.0.1
+
+    $ q url,ipv4 somefile.txt
+    Lorem ipsum http://google.com 127.0.0.1
+
+    $ q -n url,ipv4 somefile.txt
+    somefile.txt:1  Lorem ipsum http://google.com 127.0.0.1
+
+    $ q -o url,ipv4 somefile.txt
+    http://google.com
+    127.0.0.1
+
+    $ q -no url,ipv4 somefile.txt
+    somefile.txt:1  http://google.com
+    somefile.txt:1  127.0.0.1
+
+    $ q -ol url,ipv4 somefile.txt
+    http://google.com 127.0.0.1
 .SH AUTHOR
 Sergey Arkhipov (nineseconds@yandex.ru) / https://github.com/9seconds/q
