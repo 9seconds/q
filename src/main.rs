@@ -65,7 +65,6 @@ fn main() {
             clap::Arg::with_name("RULES")
                 .help("Regexp rules to apply to the stdin as a comma-separated list")
                 .index(1)
-                // .required(true)
         ).arg(
             clap::Arg::with_name("FILES")
                 .help("Files to process. If no file is specified then q will consume stdin")

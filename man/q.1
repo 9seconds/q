@@ -36,11 +36,12 @@ So it is just a regexp inside. If you want to define several regular expressions
 .SH FLAGS
 Here is the list of current supported flags.
 
-    -i, --case-insensitive    Use case insensitive regex versions.
-    -d, --debug               Run q in debug mode.
+    -i, --case-insensitive    Use case insensitive regex versions
+    -d, --debug               Run q in debug mode
     -n, --line-numbers        Print line numbers and filenames
-    -o, --matches-only        Print matches only, not whole line.
-    -l, --same-line           Keep matches on the same line.
+    -l, --list                Just list regular expressions, nothing else
+    -o, --matches-only        Print matches only, not whole line
+    -s, --same-line           Keep matches on the same line
     -h, --help                Prints help information
     -V, --version             Prints version information
 
@@ -56,9 +57,11 @@ Here is the list of current supported flags.
               have this information.
         -o    By default q will print whole line where matches were found. If
               you want just to have matches, use this option.
-        -l    Makes sense with -o only. By default -o will print one match per
+        -s    Makes sense with -o only. By default -o will print one match per
               line but if you want to have them on the same line, use this
               option.
+        -l    Just lists available regular expressions, nothing else. Seriously,
+              nothing to add.
 .SH OPTIONS
     RULES       Regexp rules to apply to the stdin as a comma-separated list.
     FILES...    Files to process. If no file is specified then q will consume stdin.
