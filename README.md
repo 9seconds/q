@@ -85,7 +85,7 @@ to install man pages, install them (`man/q.1` as man 1 page).
 To install just do the following command in your terminal:
 
 ```bash
-$ brew tap brew tap 9seconds/homebrew-q
+$ brew tap 9seconds/homebrew-q
 $ brew install 9seconds/q/q
 ```
 
