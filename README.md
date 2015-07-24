@@ -32,13 +32,13 @@ per file line) is stored in some files and you just have to say what are
 you going to find.
 
 ```bash
-$ q -o ips /var/log/myapp/*.log | sort -u
+$ q -o ipv4 /var/log/myapp/*.log | sort -u
 ```
 
 It gives you the same results. If you will decide to search for URLs too, just do
 
 ```bash
-$ q -o ips,urls /var/log/myapp/*.log | sort -u
+$ q -o ipv4,url /var/log/myapp/*.log | sort -u
 ```
 
 No need to remember or reconstruct regular expressions everytime.
@@ -87,4 +87,97 @@ To install just do the following command in your terminal:
 ```bash
 $ brew tap brew tap 9seconds/homebrew-q
 $ brew install 9seconds/q/q
+```
+
+
+## Regexp files
+
+By default q will search for regexp files in `$XDG_CONFIG_HOME/q/rules`. If you do not have `XDG_CONFIG_HOME` set, it would be `$HOME/.config/q/rules`. So if you do
+
+```bash
+$ q url,ipv4,ipv6 /var/log/httpd/*log
+```
+
+q will use following regexp files:
+
+```bash
+$XDG_CONFIG_HOME/q/rules/url
+$XDG_CONFIG_HOME/q/rules/ipv4
+$XDG_CONFIG_HOME/q/rules/ipv6
+```
+
+The structure of these files are rather simple: they just contain regular expressions as is. q uses PCRE for regular expressions, not RE2 or any other syntax so be sure that your regexps are PCRE compatible.
+
+Just like an example of UUID4 file
+
+```bash
+$ cat $XDG_CONFIG_HOME/q/rules/uuid4
+[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}
+```
+
+So it is just a regexp inside. If you want to define several regular expressions inside one file it is possible, just put every regular expression on the new line. One line per regular expressions. And do not bother with pipes, q will assembly complete valid expression for you in a runtime.
+
+
+
+## Examples
+
+Let's imagine we have a test file like that
+
+```bash
+$ cat somefile.txt
+Lorem ipsum http://google.com 127.0.0.1
+e7f71ed0-77a3-42b2-b9f8-296816defd82 and the rest of the file
+```
+
+Let's run q with different options:
+
+```bash
+$ q url somefile.txt
+Lorem ipsum http://google.com 127.0.0.1
+```
+
+```bash
+$ q url,ipv4 somefile.txt
+Lorem ipsum http://google.com 127.0.0.1
+```
+
+```bash
+$ q -n url,ipv4 somefile.txt
+somefile.txt:1  Lorem ipsum http://google.com 127.0.0.1
+```
+
+```bash
+$ q -o url,ipv4 somefile.txt
+http://google.com
+127.0.0.1
+```
+
+```bash
+$ q -no url,ipv4 somefile.txt
+somefile.txt:1  http://google.com
+somefile.txt:1  127.0.0.1
+```
+
+```bash
+$ q -ol url,ipv4 somefile.txt
+http://google.com 127.0.0.1
+```
+
+
+## Links
+
+* [HomeBrew tap repository](https://github.com/9seconds/homebrew-q)
+* [Some regexp sets](https://github.com/9seconds/q-regexps)
+
+If you want to use my regexp set, just do
+
+```bash
+$ git clone https://github.com/9seconds/q-regexps $XDG_CONFIG_HOME/q/rules
+```
+
+or if you do not have `$XDG_CONFIG_HOME` set (if you have no idea what is this
+then you do not have it set usually):
+
+```bash
+$ git clone https://github.com/9seconds/q-regexps $HOME/.config/q/rules
 ```
