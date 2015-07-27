@@ -17,6 +17,7 @@ const EX_CANNOT_PROCESS_GLOB_PATTERNS: i32 = 71;
 const EX_CANNOT_PARSE_RULES: i32 = 72;
 const EX_CANNOT_PROCESS_STREAM: i32 = 73;
 const EX_CANNOT_LIST_DIRECTORY: i32 = 74;
+const EX_PLEASE_DEFINE_ALL_ATTRIBUTES: i32 = 75;
 
 
 fn main() {
@@ -92,7 +93,9 @@ fn main() {
         process::exit(EX_OK);
     }
 
-    let rules = q::rules::get_rules(&rules_directory, options.value_of("RULES").unwrap(), case_insensitive)
+    let rules_set = options.value_of("RULES")
+        .get_or_die_with(EX_PLEASE_DEFINE_ALL_ATTRIBUTES, "Please define rules option.");
+    let rules = q::rules::get_rules(&rules_directory, &rules_set, case_insensitive)
         .get_or_die_with(EX_CANNOT_PARSE_RULES, "Cannot parse rules");
     let filenames = q::filenames::extract(options.values_of("FILES"))
         .get_or_die_with(EX_CANNOT_PROCESS_GLOB_PATTERNS, "Some problems with glob patters you set, please check");

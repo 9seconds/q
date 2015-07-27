@@ -1,7 +1,7 @@
 [package]
 name = "q"
 description = "More gentle way to grep with predefined URLs set"
-version = "0.1.0"
+version = "0.1.1"
 homepage = "https://github.com/9seconds/q"
 repository = "https://github.com/9seconds/q.git"
 readme = "README.md"
