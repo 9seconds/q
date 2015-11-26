@@ -123,7 +123,7 @@ fn parse_rules(filenames: &collections::HashSet<path::PathBuf>, case_insensitive
         }
     }
 
-    let concatenated_buffer = &regex_buffer.connect("|");
+    let concatenated_buffer = &regex_buffer.join("|");
     info!("Regexp to compile: {}", concatenated_buffer);
 
     let mut regex_options: enum_set::EnumSet<pcre::CompileOption> = enum_set::EnumSet::new();

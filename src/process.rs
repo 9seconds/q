@@ -69,7 +69,7 @@ impl<'f, 'r> Printer<'f, 'r> {
     fn show_matches(&self, matches: &Vec<String>, line_number: usize) {
         if matches.len() > 0 {
             if self.same_line {
-                self.print_line(&matches.connect(" "), line_number)
+                self.print_line(&matches.join(" "), line_number)
             } else {
                 for item in matches.iter() {
                     self.print_line(&item, line_number)
