@@ -41,7 +41,7 @@ It gives you the same results. If you will decide to search for URLs too, just d
 $ q -o ipv4,url /var/log/myapp/*.log | sort -u
 ```
 
-No need to remember or reconstruct regular expressions everytime.
+No need to remember or reconstruct regular expressions every time.
 Just say what are you going to search. By default q searches for
 these regular expressions presets in `$XDG_CONFIG_HOME/q/rules` (read
 `$HOME/.config/q/rules`) but if you want you may always sets this dir
